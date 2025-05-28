@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오사카 5박 6일 여행 플래너</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Visualization & Content Choices:
+        - Flight/Hotel Details: Goal: Inform. Method: Styled HTML cards. Interaction: Static display. Justification: Clear presentation of critical booking info.
+        - Daily Itinerary: Goal: Inform, Organize. Method: Structured HTML lists with expandable details for each event (time, description, transport, food). Interaction: Click to expand/collapse details. Justification: Provides a clear daily schedule with on-demand depth.
+        - Preparation Tips: Goal: Inform. Method: Categorized HTML lists. Interaction: Static display. Justification: Easy to scan and digest essential pre-trip information.
+        - Pass Savings Visualization (Day 4): Goal: Inform, Compare. Method: Styled HTML section comparing individual entry fees to Osaka Amazing Pass cost. Interaction: Static display. Justification: Clearly demonstrates value of the pass as highlighted in the source report.
+        - "Insight" Blocks: Goal: Highlight key advice. Method: Styled callout boxes (HTML/CSS). Interaction: Static. Justification: Draws attention to important tips from the source report.
+        - Transportation Routes: Goal: Inform. Method: Text descriptions within daily itinerary items. Interaction: Static. Justification: Provides necessary travel instructions as per report.
+        - Food Recommendations: Goal: Inform. Method: Listed within relevant daily time slots or as separate suggestion lists. Interaction: Static. Justification: Easy access to dining options.
+        - Gemini - Activity Suggestion: Goal: Enhance, Personalize. Method: Button per day, modal display. Interaction: Click to fetch suggestion. Justification: Dynamic, AI-powered recommendations.
+        - Gemini - Conversation Helper: Goal: Assist. Method: Input field and button in prep tab. Interaction: User input, fetch phrases. Justification: Practical language support.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. Icons are Unicode characters. Charts via Chart.js (Canvas) - if any chart were used, but for this one, it's a direct cost comparison display.
+        -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #FFFBEB; /* bg-amber-50 */
+            color: #44403C; /* text-stone-700 */
+        }
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            margin-right: 0.5rem;
+            margin-bottom: -1px; /* Overlap with content border */
+            border-radius: 0.5rem 0.5rem 0 0;
+            background-color: #F5F5F4; /* bg-stone-200 */
+            color: #57534E; /* text-stone-600 */
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #D6D3D1; /* border-stone-300 */
+            border-bottom: none;
+        }
+        .tab-button.active {
+            background-color: #0D9488; /* bg-teal-600 */
+            color: white;
+            border-color: #0D9488;
+        }
+        .tab-content {
+            display: none;
+            padding: 1.5rem;
+            background-color: white;
+            border: 1px solid #0D9488; /* Match active tab border */
+            border-radius: 0 0.5rem 0.5rem 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .section-title {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* font-bold */
+            color: #115E59; /* text-teal-700 */
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #5EEAD4; /* border-teal-300 */
+        }
+        .subsection-title {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 600; /* font-semibold */
+            color: #0F766E; /* text-teal-600 */
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .card {
+            background-color: #FDFBF5; /* lighter amber */
+            border: 1px solid #FDE68A; /* border-amber-300 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .insight-card {
+            background-color: #F0FDFA; /* bg-teal-50 */
+            border-left: 4px solid #14B8A6; /* border-teal-500 */
+            padding: 1rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.25rem;
+        }
+        .insight-card p {
+            margin-bottom: 0.5rem;
+        }
+        .details-toggle {
+            cursor: pointer;
+            color: #0D9488; /* text-teal-600 */
+            font-weight: 500;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+        .details-content {
+            display: none;
+            margin-top: 0.5rem;
+            padding-left: 1rem;
+            border-left: 2px solid #99F6E4; /* border-teal-200 */
+        }
+        .plan-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px dashed #D6D3D1; /* border-stone-300 */
+        }
+        .plan-item:last-child {
+            border-bottom: none;
+        }
+        .pass-savings-card {
+            background-color: #F0FDF4; /* bg-green-50 */
+            border: 1px solid #4ADE80; /* border-green-400 */
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .pass-savings-card h4 {
+            font-weight: 600;
+            color: #15803D; /* text-green-700 */
+        }
+        .cost-highlight {
+            font-weight: 700;
+            color: #DC2626; /* text-red-600 */
+        }
+        .savings-highlight {
+            font-weight: 700;
+            color: #16A34A; /* text-green-600 */
+        }
+        ul {
+            list-style-type: disc;
+            margin-left: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+        .intro-paragraph {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            color: #57534E; /* text-stone-600 */
+        }
+        .gemini-button {
+            background-color: #14B8A6; /* bg-teal-500 */
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .gemini-button:hover {
+            background-color: #0D9488; /* bg-teal-600 */
+        }
+        .gemini-output {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #F0FDFA; /* bg-teal-50 */
+            border: 1px solid #5EEAD4; /* border-teal-300 */
+            border-radius: 0.375rem;
+            white-space: pre-wrap; /* To preserve line breaks from API */
+        }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 0.5rem;
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #14B8A6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 1rem auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="container mx-auto max-w-5xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-teal-700">박금혁님의 오사카 5박 6일 여행 플래너 ✈️</h1>
+            <p class="text-lg text-stone-600 mt-2">2025년 7월 3일 (목) ~ 2025년 7월 9일 (수)</p>
+        </header>
+
+        <div id="tabs" class="mb-4 flex flex-wrap border-b border-stone-300">
+            <button class="tab-button active" onclick="openTab(event, 'tab-overview')">여행 개요 및 준비</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-day1')">1일차 (7/3)</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-day2')">2일차 (7/4)</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-day3')">3일차 (7/5)</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-day4')">4일차 (7/6)</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-day5')">5일차 (7/7)</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-day6')">6일차 (7/8)</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-day7')">7일차 (7/9)</button>
+        </div>
+
+        <div id="tab-overview" class="tab-content active">
+            <h2 class="section-title">여행 개요 및 준비 📝</h2>
+            <p class="intro-paragraph">
+                본격적인 오사카 여행을 시작하기 전에, 가장 중요한 항공편, 숙소 정보와 함께 여행을 더욱 풍요롭게 만들어 줄 준비물 및 유용한 팁들을 정리했습니다. 이 정보들을 잘 숙지하시면 더욱 편안하고 즐거운 여행을 계획하고 경험하실 수 있습니다. 새롭게 추가된 AI 기반 추천 기능도 활용해 보세요!
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="card">
+                    <h3 class="subsection-title">✈️ 항공편 정보</h3>
+                    <p><strong>예약자:</strong> 박금혁 (Geumhyeok Park)</p>
+                    <hr class="my-2">
+                    <p><strong>가는 편 (인천 → 오사카)</strong></p>
+                    <p><strong>출발:</strong> 2025년 7월 3일 (목) 오전 9:10, 인천국제공항 (ICN) 1터미널</p>
+                    <p><strong>항공사 및 편명:</strong> 제주항공 7C1303</p>
+                    <p><strong>도착:</strong> 2025년 7월 3일 (목) 오전 11:00, 간사이 국제공항 (KIX) 2터미널</p>
+                    <p><strong>비행시간:</strong> 1시간 50분</p>
+                    <hr class="my-2">
+                    <p><strong>오는 편 (오사카 → 인천)</strong></p>
+                    <p><strong>출발:</strong> 2025년 7월 9일 (수) 오후 7:40, 간사이 국제공항 (KIX) 2터미널</p>
+                    <p><strong>항공사 및 편명:</strong> 제주항공 7C1306</p>
+                    <p><strong>도착:</strong> 2025년 7월 9일 (수) 오후 9:40, 인천국제공항 (ICN) 1터미널</p>
+                    <p><strong>비행시간:</strong> 2시간 0분</p>
+                    <hr class="my-2">
+                    <p><strong>좌석 등급:</strong> 일반석</p>
+                    <p><strong>무료 수하물:</strong> 1인당 15 kg</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="subsection-title">🏨 숙소 정보</h3>
+                    <p><strong>숙소명:</strong> 東横INN大阪なんば日本橋 (토요코인 오사카 난바 닛폰바시)</p>
+                    <p><strong>주소:</strong> 大阪府大阪市浪速区日本橋４－１１－４</p>
+                    <p><strong>연락처:</strong> +81-6-7668-1045</p>
+                    <p><strong>투숙객:</strong> 박금혁 외 3인 (성인 4명, 객실 2개 - 더블룸 금연)</p>
+                    <p><strong>체크인:</strong> 2025년 7월 3일 (15:00부터)</p>
+                    <p><strong>체크아웃:</strong> 2025년 7월 9일 (10:00까지)</p>
+                    <p><strong>포함 서비스:</strong> 조식 (06:30-09:00), 무료 Wi-Fi</p>
+                    <p><strong>비고:</strong> NonSmoke, TwinBeds (더블룸으로 예약됨, 트윈베드 확인 필요)</p>
+                    <hr class="my-2">
+                    <p><strong>결제 정보</strong></p>
+                    <p><strong>예상 숙박 요금:</strong> JPY 167,266 (2025년 7월 3일 체크인 시 숙소에 직접 지불)</p>
+                    <p><strong>결제 상태:</strong> 미완료</p>
+                    <p><strong>신용카드:</strong> 예약 보증용으로만 사용됨</p>
+                    <p><strong>도시세:</strong> 현지 규정에 따라 체크인 시 별도 지불 가능성 있음</p>
+                    <hr class="my-2">
+                    <p><strong>취소 정책</strong></p>
+                    <p><strong>무료 취소:</strong> 2025년 7월 2일 이전</p>
+                    <p><strong>취소 수수료:</strong> 체크인 1일 전 취소 시 17%, 노쇼 시 17%</p>
+                    <hr class="my-2">
+                     <p><strong>수하물 보관:</strong> 체크인 전/후 당일 23:00까지 셀프 물품보관함 무료 이용 가능</p>
+                </div>
+            </div>
+
+            <div class="card mt-6">
+                <h3 class="subsection-title">💡 여행 준비물 및 유용한 정보</h3>
+                <p><strong>교통 패스 활용:</strong></p>
+                <ul>
+                    <li><strong>ICOCA 카드:</strong> 간사이 지역 및 일본 전역 사용 가능 충전식 카드. 공항/주요 역에서 구매.</li>
+                    <li><strong>오사카 주유 패스 (1일권/2일권):</strong> 오사카 시내 교통 및 주요 관광지 무료 입장. (4일차 활용 추천)</li>
+                    <li><strong>간사이 쓰루 패스 (2일권/3일권):</strong> 간사이 광역 이동 시 (JR 제외). 교토/나라 방문일 고려.</li>
+                    <li><strong>교토 지하철・버스 1일권:</strong> 교토 당일치기 시 필수 (성인 1,100엔).</li>
+                </ul>
+                <p class="mt-2"><strong>날씨 및 복장 (2025년 7월 초):</strong></p>
+                <ul>
+                    <li>평균 28°C (최저 22°C, 최고 35°C), 덥고 습함. 강수량 많음 (월평균 18~24일).</li>
+                    <li>가볍고 통기성 좋은 여름 옷, 자외선 차단제, 모자, 선글라스, 휴대용 우산/우비, 얇은 가디건.</li>
+                </ul>
+                <p class="mt-2"><strong>환전 및 결제:</strong></p>
+                <ul>
+                    <li>현금과 신용카드 모두 준비. ICOCA 카드 소액결제 가능.</li>
+                </ul>
+                <p class="mt-2"><strong>데이터 및 통신:</strong></p>
+                <ul>
+                    <li>포켓 와이파이 또는 유심카드 준비. 호텔/공공장소 무료 Wi-Fi 활용.</li>
+                </ul>
+                <p class="mt-2"><strong>기타:</strong></p>
+                <ul>
+                    <li>110V 변환 어댑터 (돼지코).</li>
+                    <li>상비약 (소화제, 진통제 등).</li>
+                    <li>여행자 보험 가입 권장.</li>
+                    <li>간단한 일본어 회화 익히기 ("스미마셍", "아리가토 고자이마스" 등).</li>
+                    <li>인기 식당은 사전 예약 고려 (호텔 컨시어지, 타베로그 등 이용).</li>
+                </ul>
+                <div class="mt-4 pt-4 border-t border-stone-200">
+                    <h4 class="text-lg font-semibold text-teal-600 mb-2">여행 회화 도우미 ✨</h4>
+                    <p class="text-sm text-stone-500 mb-2">궁금한 상황을 한국어로 입력하고 버튼을 누르면 유용한 일본어 표현을 알려드립니다.</p>
+                    <input type="text" id="conversationSituation" placeholder="예: 식당에서 주문하기" class="w-full p-2 border border-stone-300 rounded-md mb-2">
+                    <button id="getConversationHelp" class="gemini-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+                            <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.3l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.3A1.73 1.73 0 0 0 2.31 4.207l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
+                        </svg>
+                        AI에게 질문하기
+                    </button>
+                    <div id="conversationResult" class="gemini-output" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-day1" class="tab-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="section-title !mb-0">1일차: 오사카 도착 및 난바/닛폰바시 탐방 (7월 3일 목요일) 🏙️</h2>
+                <button class="gemini-button" onclick="getDailyRecommendation('1일차', '오사카 도착, 숙소 이동, 닛폰바시 덴덴타운 및 구로몬 시장 탐방')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+                        <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.3l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.3A1.73 1.73 0 0 0 2.31 4.207l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
+                    </svg>
+                    오늘의 추천 활동
+                </button>
+            </div>
+            <p class="intro-paragraph">
+                드디어 오사카 여행의 첫날입니다! 간사이 국제공항에 도착하여 숙소로 이동한 후, 숙소 주변인 닛폰바시 덴덴타운과 '오사카의 부엌' 구로몬 시장을 둘러보며 오사카의 첫인상을 느껴보는 일정입니다. 이동의 피로를 고려하여 비교적 여유롭게 주변을 탐방하는 데 초점을 맞춥니다.
+            </p>
+            
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">오전/이른 오후: 간사이 국제공항 (KIX) 도착 및 숙소 이동</h4>
+                <p><strong>11:00:</strong> 간사이 국제공항 (KIX) 제2터미널 도착, 입국 심사, 수하물 수령.</p>
+                <p><strong>숙소 이동 (토요코인 오사카 난바 닛폰바시):</strong></p>
+                <ul>
+                    <li><strong>추천: 공항 리무진 버스</strong>
+                        <ul>
+                            <li>탑승: KIX 제2터미널 버스 정류장 → 난바 OCAT 행 (약 1시간 3분 소요, 약 1,300엔).</li>
+                            <li>하차 후: 난바 OCAT에서 숙소까지 도보(15-20분) 또는 택시.</li>
+                        </ul>
+                    </li>
+                    <li>대안: 난카이 전철 (T2→T1 셔틀 이동 필요)
+                        <ul>
+                            <li>공항급행: 간사이공항역 → 난카이 난바역 (약 45-50분, 970엔).</li>
+                            <li>특급 라피트: 간사이공항역 → 난카이 난바역 (약 35-40분, 1,490엔).</li>
+                            <li>하차 후: 난카이 난바역에서 숙소까지 도보(6-10분).</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p><strong>13:00~14:00:</strong> 호텔 도착, 짐 보관 (체크인 15:00부터, 셀프 물품보관함 무료 이용).</p>
+                <div class="insight-card">
+                    <p class="font-semibold">💡 Insight 1: 도착일 수하물 관리 및 이동 편의성 증대</p>
+                    <p>4인 가족 및 짐을 고려 시, KIX T2에서 난바 OCAT까지 직행 리무진 버스 이용 후 OCAT에서 숙소까지 짧은 택시 이동이 가장 편리할 수 있습니다. 토요코인의 셀프 물품보관함은 체크인 시간 전 짐 보관에 매우 유용합니다.</p>
+                </div>
+                <span class="details-toggle" onclick="toggleDetails(this)">자세히 보기 ▼</span>
+                <div class="details-content">
+                    <p><strong>리무진 버스 정보:</strong> 제2터미널에서 매시간 운행. 환승 없이 OCAT 도착.</p>
+                    <p><strong>난카이 전철 정보:</strong> T1 이동 후 탑승. 라피트는 빠르나 비쌈, 공항급행은 가성비 좋음.</p>
+                </div>
+            </div>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">🍴 점심 식사: 닛폰바시 또는 난바역 근처</h4>
+                <p>숙소에 짐 맡긴 후 가볍게 식사.</p>
+                <p><strong>추천 메뉴:</strong> 라멘, 우동, 덮밥 등.</p>
+                <span class="details-toggle" onclick="toggleDetails(this)">식당 옵션 (4인 가족, 가성비) 보기 ▼</span>
+                <div class="details-content">
+                    <ul>
+                        <li><strong>멘야 조로쿠 난바점 (麺屋 丈六 なんば店):</strong> 라멘 맛집 (웨이팅 가능성).</li>
+                        <li><strong>치토세 본점 (千とせ 本店):</strong> '니쿠스이' 유명 우동집 (본점 웨이팅 가능, 벳칸 고려).</li>
+                        <li><strong>오사카 톤테키 (Osaka Tonteki) 난바 워크점:</strong> 돼지고기 스테이크 전문점.</li>
+                        <li><strong>잇푸테이 본점 (一芳亭 本店):</strong> 슈마이, 중화요리.</li>
+                    </ul>
+                    <p><em>팁: 타베로그(Tabelog)에서 평점 및 후기 확인. 테이블석 유무 확인.</em></p>
+                </div>
+            </div>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">오후: 닛폰바시 덴덴타운 및 구로몬 시장 탐방</h4>
+                <p><strong>닛폰바시 덴덴타운 (DenDen Town):</strong></p>
+                <ul>
+                    <li>오사카의 '아키하바라'. 전자제품, 애니메이션, 게임 관련 상점 밀집.</li>
+                    <li>숙소에서 도보 이동 가능. (약 1.5 ~ 2시간 소요)</li>
+                </ul>
+                <p class="mt-2"><strong>구로몬 시장 (Kuromon Market):</strong></p>
+                <ul>
+                    <li>'오사카의 부엌'. 신선한 해산물, 길거리 음식 천국.</li>
+                    <li>덴덴타운에서 도보 이동 가능. (약 1.5 ~ 2시간 소요)</li>
+                    <li><strong>추천 방문 시간: 오후 4시 이전 (대부분 상점 4시 30분경 마감 시작).</strong></li>
+                </ul>
+                 <div class="insight-card">
+                    <p class="font-semibold">💡 Insight 2: 구로몬 시장 방문 최적 시간대 선정</p>
+                    <p>다양한 먹거리를 제대로 경험하려면 상점들이 문을 닫기 전인 오후 4시 이전에 도착하도록 시간을 조절하는 것이 좋습니다. 점심시간(12:00-13:30)은 매우 붐빕니다.</p>
+                </div>
+                <span class="details-toggle" onclick="toggleDetails(this)">활동 정보 보기 ▼</span>
+                <div class="details-content">
+                    <p><strong>덴덴타운:</strong> 캐릭터 상품 구경, 게임센터 체험.</p>
+                    <p><strong>구로몬 시장:</strong> 참치, 성게, 가리비 구이, 타코야키 등 길거리 음식 맛보기. 현지 식재료 구경.</p>
+                </div>
+            </div>
+            
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">🍴 저녁 식사: 구로몬 시장 또는 난바/닛폰바시 지역</h4>
+                <p>구로몬 시장 해산물 또는 숙소 근처 일본 가정식/현지식.</p>
+                <span class="details-toggle" onclick="toggleDetails(this)">식당 옵션 (4인 가족) 보기 ▼</span>
+                <div class="details-content">
+                     <ul>
+                        <li><strong>구로몬 시장 내 식당:</strong> 일부 식당 저녁 늦게까지 운영 (예: 구로몬 사카에 스시, 미트 샵 코베야).</li>
+                        <li><strong>난바/닛폰바시:</strong> 타베로그에서 '和食(와쇼쿠)', '定食(테이쇼쿠)' 검색.</li>
+                        <li><strong>고려사항:</strong> 테이블석, 아이 동반, 카드 사용 여부. (예: OKINI 야키니쿠 - 와규 뷔페, 카드 불가 가능성 / 스시 아카즈, 난바 스시 요코타 - 스시)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="font-semibold text-lg text-teal-600">저녁 식사 후: 숙소 복귀 및 휴식 😴</h4>
+                <p>첫날 마무리. 충분한 휴식.</p>
+            </div>
+        </div>
+
+        <div id="tab-day2" class="tab-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="section-title !mb-0">2일차: 오사카의 상징, 도톤보리 & 신사이바시 완전 정복 (7월 4일 금요일) ✨</h2>
+                <button class="gemini-button" onclick="getDailyRecommendation('2일차', '도톤보리, 신사이바시, 호젠지 요코초 도보 탐방, 오코노미야키 & 타코야키 식사, 자유 쇼핑 또는 아메리카무라 방문')">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+                        <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.3l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.3A1.73 1.73 0 0 0 2.31 4.207l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
+                    </svg>
+                    오늘의 추천 활동
+                </button>
+            </div>
+            <p class="intro-paragraph">
+                오사카 여행 둘째 날은 도시의 심장부인 도톤보리와 신사이바시 지역을 집중적으로 탐방합니다. 오사카의 상징적인 글리코상부터 활기 넘치는 상점가, 그리고 고즈넉한 호젠지 요코초까지 오사카의 다채로운 매력을 경험하는 하루입니다. 오사카 대표 음식인 오코노미야키와 타코야키도 맛볼 예정입니다.
+            </p>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">오전: 도톤보리, 신사이바시, 호젠지 요코초 도보 탐방</h4>
+                <p><strong>09:30:</strong> 호텔 조식 후 출발.</p>
+                <p><strong>교통:</strong> 숙소(닛폰바시)에서 도톤보리까지 도보 (10-15분) 또는 지하철 1정거장.</p>
+                <p><strong>도보 탐방 코스 (약 2-3시간):</strong></p>
+                <ul>
+                    <li>구로몬 시장 (오전 재방문 또는 경유)</li>
+                    <li>닛폰바시역 출발 → 도톤보리 글리코상 (기념사진!)</li>
+                    <li>도톤보리 강변 산책 (톤보리 리버워크)</li>
+                    <li>에비스바시, 카니도라쿠, 돈키호테 관람차 등 명물 간판 구경</li>
+                    <li>호젠지 & 호젠지 요코초 (이끼 낀 후도묘오상, 전통 골목)</li>
+                    <li>신사이바시스지 상점가 (약 600m 아케이드 쇼핑가)</li>
+                </ul>
+                <span class="details-toggle" onclick="toggleDetails(this)">탐방 포인트 보기 ▼</span>
+                <div class="details-content">
+                    <p><strong>글리코상:</strong> 오사카 대표 랜드마크.</p>
+                    <p><strong>톤보리 리버워크:</strong> 활기찬 강변 분위기.</p>
+                    <p><strong>호젠지 요코초:</strong> 번화가 속 고즈넉한 옛 정취. 후도묘오상에 물 뿌리며 소원 빌기.</p>
+                    <p><strong>신사이바시스지:</strong> 백화점, 브랜드샵, 드럭스토어 등 쇼핑 천국.</p>
+                </div>
+            </div>
+
+            <div class="plan-item">
+                 <h4 class="font-semibold text-lg text-teal-600">🍴 점심 식사: 도톤보리 또는 신사이바시 (오코노미야키 & 타코야키)</h4>
+                <p>오사카 대표 음식 맛보기!</p>
+                <div class="insight-card">
+                    <p class="font-semibold">💡 Insight 3: 도톤보리 식사 선택 전략</p>
+                    <p>4인 가족의 편의성을 고려하여, 타코야키는 실내 좌석이 있는 곳(예: 쿠쿠루, 혼케 오오타코), 오코노미야키는 테이블 수가 많고 예약 가능한 곳(예: 치보)을 우선 고려하는 것이 좋습니다. 점심시간에는 대기가 길 수 있습니다.</p>
+                </div>
+                <span class="details-toggle" onclick="toggleDetails(this)">식당 옵션 (4인 가족) 보기 ▼</span>
+                <div class="details-content">
+                    <p><strong>타코야키:</strong></p>
+                    <ul>
+                        <li><strong>쿠쿠루 (Kukuru) 도톤보리 본점/코나몬 뮤지엄:</strong> 30년 역사, 부드러운 반죽, 큰 문어 (테이블석 있음).</li>
+                        <li><strong>혼케 오오타코 (Honke Ootako) 도톤보리 본점:</strong> 1972년 개업, 가장 오래된 곳 중 하나. 넓은 실내 좌석.</li>
+                        <li><strong>앗치치 혼포 (Acchichi Honpo) 도톤보리점:</strong> 강가 위치, 야외석 있음.</li>
+                    </ul>
+                    <p class="mt-2"><strong>오코노미야키:</strong></p>
+                    <ul>
+                        <li><strong>미즈노 (Mizuno):</strong> 80년 전통, 미슐랭 선정 (웨이팅 김). 야마이모야키 유명.</li>
+                        <li><strong>치보 (Chibo) 도톤보리점:</strong> 인기 체인, 영어 메뉴/직원, 다양한 메뉴, 예약 가능성 (테이블 120석).</li>
+                        <li><strong>본쿠라야 (Bonkuraya):</strong> 부드러운 식감, 영어 메뉴, 중/한 가능 직원.</li>
+                        <li><strong>아지노야 (Ajinoya):</strong> 미슐랭 빕 구르망, 양배추 위주 가벼운 반죽.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">오후: 자유 쇼핑 또는 아메리카무라 방문 🛍️</h4>
+                <p>신사이바시스지 상점가 또는 주변 백화점 (다이마루, 타카시마야) 쇼핑.</p>
+                <p class="mt-1"><strong>선택 사항: 아메리카무라 (Amerikamura) 방문 (약 1.5~2시간)</strong></p>
+                <ul>
+                    <li>젊은이들의 패션/문화 중심지. 독특한 의류, 빈티지샵, 카페.</li>
+                    <li>신사이바시역에서 도보 이동 가능.</li>
+                </ul>
+                <span class="details-toggle" onclick="toggleDetails(this)">아메리카무라 활동 보기 ▼</span>
+                <div class="details-content">
+                    <p>독특한 패션 아이템 구경, 길거리 음식 맛보기, 젊은 문화 체험.</p>
+                </div>
+            </div>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">🍴 저녁 식사: 난바/신사이바시 지역</h4>
+                <p>점심에 못 먹은 오사카 명물 또는 가족 선호 일식 메뉴.</p>
+                 <span class="details-toggle" onclick="toggleDetails(this)">식당 옵션 (4인 가족) 보기 ▼</span>
+                <div class="details-content">
+                    <ul>
+                        <li>타베로그 등 참고하여 평점 좋은 일식당, 이자카야, 전골 요리 등.</li>
+                        <li><strong>OKINI 야키니쿠 (OKINI焼肉):</strong> 난바역 근처. 와규/샤브샤브 뷔페 (카드 불가 정보 있음).</li>
+                    </ul>
+                    <p><em>팁: 주말 저녁은 붐비므로 예약 또는 이른 식사 시작 고려.</em></p>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-semibold text-lg text-teal-600">저녁 식사 후: 도톤보리 야경 감상 및 숙소 복귀 🌃</h4>
+                <p>화려한 네온사인으로 빛나는 도톤보리 야경 감상.</p>
+            </div>
+        </div>
+        
+        <div id="tab-day3" class="tab-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="section-title !mb-0">3일차: 오사카 역사와 레트로 감성 여행 (7월 5일 토요일) 🏯</h2>
+                <button class="gemini-button" onclick="getDailyRecommendation('3일차', '오사카성 천수각, 니시노마루 정원, 신세카이, 츠텐카쿠, 쿠시카츠 식사')">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+                        <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.3l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.3A1.73 1.73 0 0 0 2.31 4.207l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
+                    </svg>
+                    오늘의 추천 활동
+                </button>
+            </div>
+            <p class="intro-paragraph">
+                셋째 날은 오사카의 역사적인 면모와 독특한 레트로 감성을 함께 느껴보는 하루입니다. 오사카의 상징인 오사카성 천수각과 아름다운 니시노마루 정원을 오전에 방문하고, 오후에는 복고풍 매력이 넘치는 신세카이와 츠텐카쿠 타워를 탐방하며 명물 쿠시카츠를 맛봅니다. 오사카 주유 패스를 활용하면 더욱 경제적인 하루가 될 수 있습니다.
+            </p>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">오전: 오사카성 천수각 및 니시노마루 정원</h4>
+                <p><strong>09:00:</strong> 호텔 조식 후 출발.</p>
+                <p><strong>교통 (오사카 주유 패스 사용 시 무료):</strong></p>
+                <ul>
+                    <li>닛폰바시역/에비스초역 (사카이스지선 K17/K18) → 사카이스지혼마치역 (K15) 환승 → 주오선 사카이스지혼마치역 (C17) → 다니마치욘초메역 (C18) 또는 모리노미야역 (C19) 하차. (역에서 성까지 도보 15-20분)</li>
+                    <li>또는 닛폰바시역 (센니치마에선 S17) → 다니마치큐초메역 (S18) 환승 → 다니마치선 다니마치큐초메역 (T25) → 다니마치욘초메역 (T23) 하차.</li>
+                </ul>
+                <p class="mt-2"><strong>오사카성 천수각 (약 1.5~2시간):</strong></p>
+                <ul>
+                    <li>개관: 09:00-17:00 (입장마감 16:30). 입장료: 성인 600엔 (주유패스 무료).</li>
+                    <li>8층 전망대, 역사 박물관 (도요토미 히데요시 관련 유물).</li>
+                </ul>
+                <p class="mt-2"><strong>니시노마루 정원 (약 30분~1시간):</strong></p>
+                <ul>
+                    <li>개관: 09:00-17:00 (월요일 휴무). 입장료: 성인 200엔 (주유패스 무료).</li>
+                    <li>넓은 잔디 정원, 천수각 배경 사진 명소.</li>
+                </ul>
+                <div class="insight-card">
+                    <p class="font-semibold">💡 Insight 4: 오사카성 방문 시 교통 및 패스 활용</p>
+                    <p>오사카 주유 패스를 이용하면 오사카성 천수각과 니시노마루 정원 모두 무료 입장이 가능하며, 해당 지하철 노선도 무료로 이용할 수 있어 경제적입니다. 천수각 내부에 계단이 있으므로 편한 신발을 추천합니다.</p>
+                </div>
+            </div>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">🍴 점심 식사: 오사카성 근처 또는 조테라스 오사카</h4>
+                <p><strong>조테라스 오사카 (JO-TERRACE OSAKA):</strong> 오사카조코엔역 앞 복합 시설. 다양한 레스토랑.</p>
+                <span class="details-toggle" onclick="toggleDetails(this)">식당 옵션 (4인 가족) 보기 ▼</span>
+                <div class="details-content">
+                    <ul>
+                        <li><strong>Italian Dining NATURA:</strong> 파스타, 피자.</li>
+                        <li><strong>카츠만 (かつ満):</strong> 돈카츠.</li>
+                        <li><strong>사치후쿠야 (さち福や):</strong> 일본 가정식.</li>
+                        <li><strong>나다이 치보 (名代 千房):</strong> 오코노미야키.</li>
+                        <li><strong>타코야키 도라쿠 와나카 (たこ焼道楽わなか):</strong> 타코야키.</li>
+                    </ul>
+                    <p><em>팁: 다니마치욘초메역/모리노미야역 근처 식당도 타베로그로 검색 가능.</em></p>
+                </div>
+            </div>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">오후: 신세카이 및 츠텐카쿠</h4>
+                <p><strong>교통 (오사카 주유 패스 사용 시 무료):</strong></p>
+                <ul>
+                    <li>오사카성 → 신세카이 (도부츠엔마에역 또는 에비스초역) 지하철 이동.
+                        <ul>
+                            <li>모리노미야역 (주오선 C19) → 사카이스지혼마치역 (C17/K15) 환승 → 사카이스지선 에비스초역 (K18).</li>
+                            <li>다니마치욘초메역 (다니마치선 T23) → 덴노지역 (T27/M23) 환승 → 미도스지선 도부츠엔마에역 (M22).</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p class="mt-2"><strong>신세카이 (Shinsekai):</strong></p>
+                <ul>
+                    <li>20세기 초 파리 모델의 복고풍 번화가. 츠텐카쿠 중심.</li>
+                    <li>오래된 상점가 구경, 쿠시카츠 맛보기.</li>
+                </ul>
+                <p class="mt-2"><strong>츠텐카쿠 타워 (약 1~1.5시간):</strong></p>
+                <ul>
+                    <li>개관: 10:00-20:00 (입장마감 19:30). 입장료: 성인 1,200엔 (주유패스 무료).</li>
+                    <li>신세카이 상징 전망탑. 황금 빌리켄상, 오사카 시내 전망.</li>
+                </ul>
+            </div>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">🍴 저녁 식사: 신세카이 (쿠시카츠)</h4>
+                <p>신세카이 명물 쿠시카츠 맛보기 (고기, 해산물, 채소 꼬치튀김).</p>
+                <div class="insight-card">
+                    <p class="font-semibold">💡 Insight 5: 신세카이 쿠시카츠 식당 선택</p>
+                    <p>가족 단위 방문 시, 규모가 크고 단체 손님을 받는 '요코즈나'나 여러 지점이 있는 '다루마' 등을 고려하면 좋습니다. "소스 두 번 찍기 금지" 규칙 유의!</p>
+                </div>
+                <span class="details-toggle" onclick="toggleDetails(this)">식당 옵션 (4인 가족) 보기 ▼</span>
+                <div class="details-content">
+                    <ul>
+                        <li><strong>원조 쿠시카츠 다루마 (Ganso Kushikatsu Daruma):</strong> 유명 체인.</li>
+                        <li><strong>야에카츠 (八重勝):</strong> 현지인 인기 맛집 (웨이팅 가능성).</li>
+                        <li><strong>덴구 (天狗):</strong> 타베로그 평점 높음.</li>
+                        <li><strong>일본 제일의 쿠시카츠 요코즈나 신세카이 본점:</strong> 거대 메뉴, 활기찬 분위기, 단체 적합.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-semibold text-lg text-teal-600">저녁 식사 후: 숙소 복귀</h4>
+                <p>지하철 이용하여 숙소 복귀.</p>
+            </div>
+        </div>
+
+        <div id="tab-day4" class="tab-content">
+             <div class="flex justify-between items-center mb-4">
+                <h2 class="section-title !mb-0">4일차: 오사카 베이 에어리어 & 우메다 야경 (7월 6일 일요일) 🎡🌉</h2>
+                <button class="gemini-button" onclick="getDailyRecommendation('4일차', '오사카 아쿠아리움 가이유칸, 덴포잔 마켓플레이스, 덴포잔 대관람차, 산타마리아호 데이 크루즈, 우메다 스카이 빌딩 공중정원 전망대')">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+                        <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.3l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.3A1.73 1.73 0 0 0 2.31 4.207l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
+                    </svg>
+                    오늘의 추천 활동
+                </button>
+            </div>
+            <p class="intro-paragraph">
+                오늘은 오사카의 또 다른 매력, 베이 에어리어와 화려한 우메다의 야경을 즐기는 날입니다. 세계 최대급 수족관인 가이유칸을 시작으로 덴포잔 대관람차와 산타마리아호 크루즈를 체험하고, 저녁에는 우메다 스카이 빌딩에서 멋진 오사카의 야경을 감상합니다. 오늘은 특히 오사카 주유 패스를 사용하면 입장료와 교통비를 크게 절약할 수 있는 날입니다!
+            </p>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">오전/이른 오후: 오사카 아쿠아리움 가이유칸 & 덴포잔 마켓플레이스</h4>
+                <p><strong>09:30:</strong> 호텔 조식 후 출발.</p>
+                <p><strong>교통 (오사카 주유 패스 사용 시 지하철 무료):</strong></p>
+                <ul>
+                    <li>닛폰바시역/에비스초역 (K17/K18) → 사카이스지혼마치역 (K15/C17) 환승 → 주오선 오사카코역 (C11) 하차. (역에서 가이유칸 도보 5분)</li>
+                </ul>
+                <p class="mt-2"><strong>오사카 아쿠아리움 가이유칸 (약 2.5~3시간):</strong></p>
+                <ul>
+                    <li>개관: 10:00-20:00 (입장마감 19:00, 변동 가능). 입장료: 성인 약 2,300-2,700엔 (주유패스 무료 아님, 할인 가능성 확인).</li>
+                    <li>세계 최대급 수족관. 환태평양 테마, 고래상어 하이라이트. 온라인 예매 권장.</li>
+                </ul>
+                <p class="mt-2"><strong>덴포잔 마켓플레이스 (점심 포함 약 1.5~2시간):</strong></p>
+                <ul>
+                    <li>가이유칸 옆 쇼핑몰. 레스토랑, 기념품점.</li>
+                    <li><strong>나니와 구이신보 요코초:</strong> 1960년대 오사카 거리 재현 푸드 테마파크 (지유켄 카레, 타코야키 등).</li>
+                </ul>
+            </div>
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">🍴 점심 식사: 덴포잔 마켓플레이스 내</h4>
+                <p>나니와 구이신보 요코초 또는 기타 레스토랑. 다양한 오사카 음식 선택 가능.</p>
+            </div>
+
+            <div class="pass-savings-card">
+                <h3 class="subsection-title text-green-700">💡 오사카 주유 패스 (1일권) 활용 Tip! (4일차 집중 사용)</h3>
+                <p class="intro-paragraph">
+                    4일차는 오사카 주유 패스(1일권 약 3,500엔)의 혜택을 최대로 누릴 수 있는 날입니다. 가이유칸은 패스 무료 입장이 아니지만, 이후 방문할 주요 명소들은 패스로 무료 이용이 가능하여 교통비 포함 상당한 비용을 절약할 수 있습니다.
+                </p>
+                <div class="insight-card">
+                    <p class="font-semibold">💡 Insight 6: 오사카 주유 패스 활용 극대화 방안</p>
+                    <p>덴포잔 대관람차, 산타마리아호 데이 크루즈, 우메다 스카이 빌딩 공중정원 전망대는 모두 오사카 주유 패스로 무료 입장이 가능합니다. 이 세 곳의 입장료 합계만 해도 1일권 가격을 훨씬 뛰어넘습니다.</p>
+                </div>
+                <div class="mt-4">
+                    <h4 class="text-lg font-semibold mb-2">오늘 패스로 무료 이용 가능한 주요 명소:</h4>
+                    <div class="grid md:grid-cols-3 gap-4 text-center">
+                        <div class="p-4 bg-white rounded-lg shadow">
+                            <p class="text-2xl">🎡</p>
+                            <p class="font-semibold">덴포잔 대관람차</p>
+                            <p>일반 요금: <span class="cost-highlight">900엔</span></p>
+                        </div>
+                        <div class="p-4 bg-white rounded-lg shadow">
+                            <p class="text-2xl">🚢</p>
+                            <p class="font-semibold">산타마리아호 데이 크루즈</p>
+                            <p>일반 요금: <span class="cost-highlight">1,800엔</span></p>
+                        </div>
+                        <div class="p-4 bg-white rounded-lg shadow">
+                            <p class="text-2xl">🌃</p>
+                            <p class="font-semibold">우메다 스카이 빌딩</p>
+                            <p>일반 요금: <span class="cost-highlight">2,000엔</span></p>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center p-4 bg-green-100 rounded-lg">
+                        <p class="text-lg">위 3곳 총 입장료: <span class="cost-highlight">4,700엔</span></p>
+                        <p class="text-lg">오사카 주유 패스 1일권: <span class="text-blue-600 font-semibold">3,500엔</span></p>
+                        <p class="text-xl font-bold mt-2">🎉 입장료만 <span class="savings-highlight">1,200엔 절약</span> + 당일 지하철/버스 무제한! 🎉</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="plan-item mt-6">
+                <h4 class="font-semibold text-lg text-teal-600">오후: 덴포잔 대관람차 & 산타마리아호 데이 크루즈</h4>
+                <p><strong>덴포잔 대관람차 (탑승 약 15분):</strong></p>
+                <ul>
+                    <li>운영: 10:00-21:00/22:00. 요금: 900엔 (주유패스 무료).</li>
+                    <li>오사카항 조망.</li>
+                </ul>
+                <p class="mt-2"><strong>산타마리아호 데이 크루즈 (약 45분):</strong></p>
+                <ul>
+                    <li>운항: 11:00-16:00 (매시 정각). 요금: 1,800엔 (주유패스 무료).</li>
+                    <li>콜럼버스 산타마리아호 복원 유람선. 오사카항 유람.</li>
+                </ul>
+            </div>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">늦은 오후/저녁: 우메다 이동 및 우메다 스카이 빌딩 공중정원 전망대</h4>
+                 <p><strong>교통 (오사카 주유 패스 사용 시 무료):</strong></p>
+                <ul>
+                    <li>오사카코역 (주오선 C11) → 혼마치역 (C16/M18) 환승 → 미도스지선 우메다역 (M16) 하차.</li>
+                    <li>우메다역에서 스카이 빌딩까지 도보 7-10분.</li>
+                </ul>
+                <p class="mt-2"><strong>우메다 스카이 빌딩 공중정원 전망대 (약 1~1.5시간):</strong></p>
+                <ul>
+                    <li>개관: 09:30-22:30 (입장마감 22:00). 입장료: 성인 2,000엔 (주유패스 무료).</li>
+                    <li>173m 높이 파노라마 야경. 360도 옥상 전망대. 해질녘 방문 추천.</li>
+                </ul>
+            </div>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">🍴 저녁 식사: 우메다 지역</h4>
+                <p>우메다 스카이 빌딩 다키미코지 식당가, 한큐 그랜드 빌딩, 그랜드 프론트 오사카, 루쿠아 오사카 등.</p>
+                <div class="insight-card">
+                     <p class="font-semibold">💡 Insight 7: 우메다 저녁 식사 장소 선정의 다양성</p>
+                    <p>우메다는 선택지가 매우 다양합니다. 그랜드 프론트 오사카, 루쿠아 오사카, 한큐 그랜드 빌딩 등 대형 쇼핑몰 식당가는 다양한 메뉴와 좋은 분위기를 제공하며, 특히 고층 식당가는 야경을 즐길 수 있습니다. 4인 가족의 경우, 예약 가능하고 테이블석이 확보된 곳을 우선 고려하세요.</p>
+                </div>
+                <span class="details-toggle" onclick="toggleDetails(this)">식당 옵션 (4인 가족) 보기 ▼</span>
+                <div class="details-content">
+                    <ul>
+                        <li><strong>다키미코지 (스카이빌딩 B1):</strong> 레트로풍 식당가. 오코노미야키 '키지' (좌석 적음, 예약 어려움).</li>
+                        <li><strong>한큐 그랜드 빌딩 SORANIWA Dining (27-31층):</strong> 고층 야경, 다양한 레스토랑.</li>
+                        <li><strong>그랜드 프론트 오사카 (남관/북관):</strong> 다양한 국적 레스토랑. 북관 6층 우메키타 플로어.</li>
+                        <li><strong>루쿠아 오사카 (10층 루쿠아 다이닝):</strong> 다양한 장르 레스토랑 밀집.</li>
+                        <li><strong>다이마루 우메다 (14층):</strong> 시푸드, 뷔페, 일식 등.</li>
+                    </ul>
+                    <p><em>팁: 주말 저녁은 예약 필수. 타베로그에서 '우메다역', '저녁', 음식 종류, 가격대, '4인', '예약 가능' 필터 사용.</em></p>
+                </div>
+            </div>
+
+             <div>
+                <h4 class="font-semibold text-lg text-teal-600">저녁 식사 후: 숙소 복귀</h4>
+                <p>지하철 이용하여 숙소 복귀.</p>
+            </div>
+        </div>
+
+        <div id="tab-day5" class="tab-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="section-title !mb-0">5일차: 고도 교토 당일치기 여행 (7월 7일 월요일) 🌸⛩️</h2>
+                <button class="gemini-button" onclick="getDailyRecommendation('5일차', '교토 당일치기: 후시미 이나리 신사, 기요미즈데라, 산넨자카/니넨자카, 아라시야마 (대나무 숲, 도게츠교), 금각사')">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+                        <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.3l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.3A1.73 1.73 0 0 0 2.31 4.207l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
+                    </svg>
+                    오늘의 추천 활동
+                </button>
+            </div>
+            <p class="intro-paragraph">
+                다섯째 날은 일본의 옛 수도, 교토로 떠나는 당일치기 여행입니다. 수천 개의 붉은 도리이가 장관인 후시미 이나리 신사를 시작으로, 아름다운 기요미즈데라와 주변 거리, 그리고 아라시야마의 대나무 숲과 금각사까지 교토의 핵심 명소들을 둘러보는 알찬 일정입니다. 이동이 많으므로 편안한 신발은 필수이며, '교토 지하철・버스 1일권'을 활용하면 편리합니다.
+            </p>
+            <div class="insight-card">
+                <p class="font-semibold">💡 Insight 13: 교토 당일치기 일정의 야심찬 도전 - 시간 관리가 관건</p>
+                <p>후시미 이나리, 기요미즈데라, 아라시야마, 금각사를 하루에 모두 방문하는 것은 매우 빡빡한 일정입니다. 매우 이른 아침부터 움직여야 하며, 각 장소에서의 체류 시간을 조절하고, 명소 우선순위를 정하는 것이 중요합니다. 금각사는 오후 5시에 폐장하므로 특히 시간 제약에 유의해야 합니다.</p>
+            </div>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">오전 일찍: 오사카에서 교토 이동 및 후시미 이나리 신사</h4>
+                <p><strong>07:30:</strong> 호텔 조식 후 최대한 일찍 출발.</p>
+                <p><strong>교토 1일 교통권 구매:</strong> 교토역 도착 후 버스 인포메이션 센터/지하철역에서 '교토 지하철・버스 1일권' (성인 1,100엔) 구매.</p>
+                <p><strong>오사카(난바) → 교토역 이동 (약 50분~1시간):</strong></p>
+                <ul>
+                    <li><strong>추천: 지하철 + JR:</strong> 닛폰바시역/에비스초역 → 미도스지선 난바역 → 신오사카역 이동. 신오사카역에서 JR 교토선 신쾌속/쾌속 → JR 교토역 (지하철 약 240-270엔 + JR 약 580엔).</li>
+                </ul>
+                <p class="mt-2"><strong>교토역 → 후시미 이나리 신사 이동:</strong></p>
+                <ul>
+                    <li>JR 교토역 → JR 나라선 보통 열차 → 이나리역 (약 5분, 150엔). 역 출구 바로 앞.</li>
+                </ul>
+                <p class="mt-2"><strong>후시미 이나리 신사 (Fushimi Inari Taisha) (약 1.5~2시간):</strong></p>
+                <ul>
+                    <li>수천 개 붉은 도리이 터널. 입장료 무료. 상시 개방.</li>
+                    <li><strong>오전 일찍 방문 필수 (덜 붐빔).</strong></li>
+                </ul>
+                 <div class="insight-card">
+                    <p class="font-semibold">💡 Insight 11: 후시미 이나리 신사 오전 일찍 방문의 중요성</p>
+                    <p>매우 인기 있는 관광지로, 늦게 방문할수록 인파로 인해 제대로 된 관람과 사진 촬영이 어렵습니다. 최대한 일찍 (오전 8시 이전) 도착 목표.</p>
+                </div>
+            </div>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">늦은 오전/점심: 기요미즈데라 (청수사) 및 주변 (산넨자카/니넨자카)</h4>
+                <p><strong>후시미 이나리 → 기요미즈데라 이동:</strong></p>
+                <ul>
+                    <li><strong>추천: 게이한 전철 + 도보/버스:</strong> JR 이나리역 도보 또는 게이한 후시미이나리역 → 게이한 본선 기요미즈고조역 하차 (약 7-10분, 220엔). 역에서 기요미즈데라까지 도보(20-25분 오르막길) 또는 버스 이용.</li>
+                </ul>
+                <p class="mt-2"><strong>기요미즈데라 (Kiyomizu-dera Temple) (산넨자카/니넨자카 포함 약 1.5~2시간):</strong></p>
+                <ul>
+                    <li>오토와산 중턱 유서 깊은 사찰. 목조 무대 유명. 유네스코 세계문화유산.</li>
+                    <li>입장료: 성인 400엔. 개방: 보통 06:00-18:00.</li>
+                </ul>
+                <p class="mt-2"><strong>산넨자카 & 니넨자카:</strong></p>
+                <ul>
+                    <li>기요미즈데라로 이어지는 아름다운 돌계단 길. 전통 상점과 찻집.</li>
+                </ul>
+                 <div class="insight-card">
+                    <p class="font-semibold">💡 Insight 12: 히가시야마 점심 식사 - 분위기와 실용성의 조화</p>
+                    <p>산넨자카/니넨자카/기온 지역은 분위기가 좋지만 붐비고 작은 식당이 많습니다. 4인 가족이 적당한 가격으로 테이블석을 찾으려면 유연성이 필요하거나 덜 붐비는 곳을 선택해야 할 수 있습니다. 우동/소바 가게는 가성비가 좋은 선택이 될 수 있습니다.</p>
+                </div>
+                <span class="details-toggle" onclick="toggleDetails(this)">🍴 점심 식사 옵션 (기온/기요미즈데라 근처) 보기 ▼</span>
+                <div class="details-content">
+                    <p><strong>메뉴:</strong> 일본 가정식 (우동, 소바, 덮밥, 정식 등).</p>
+                    <p><strong>가격대:</strong> 1인당 1,500엔 ~ 3,000엔.</p>
+                    <ul>
+                        <li><strong>니넨자카 후타바 (二寧坂 ふたば):</strong> 소바, 단팥죽.</li>
+                        <li><strong>교토 기온 오카루 (京都祇園 おかる):</strong> 우동, 소바, 카레우동 (예약 불가).</li>
+                        <li><strong>기온 오쿠오카 (祇園おくおか):</strong> 교토 요리, 두부 요리, 우동 (개인실 가능).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">오후: 아라시야마 (대나무 숲, 도게츠교)</h4>
+                <p><strong>기온/기요미즈고조 → 아라시야마 이동:</strong></p>
+                <ul>
+                    <li><strong>추천 (빠름): JR 이용:</strong> 기온/시조가와라마치에서 버스/게이한 전철로 교토역 이동 → JR 교토역에서 JR 사가노선 → 사가아라시야마역 하차 (약 15-20분).</li>
+                    <li>기타: 게이한+한큐+란덴 (복잡), 버스 (시간 변동성 큼).</li>
+                </ul>
+                 <p class="mt-2"><strong>아라시야마 주요 명소 (약 2~2.5시간):</strong></p>
+                <ul>
+                    <li><strong>치쿠린 (대나무 숲):</strong> 하늘 높이 뻗은 대나무 길.</li>
+                    <li><strong>도게츠교:</strong> 아라시야마 상징 다리, 아름다운 주변 경관.</li>
+                    <li><strong>덴류지:</strong> 세계문화유산, 아름다운 정원 (입장료 별도).</li>
+                </ul>
+            </div>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">늦은 오후: 금각사 (킨카쿠지)</h4>
+                <p><strong>아라시야마 → 금각사 이동 (총 약 40-50분):</strong></p>
+                <ul>
+                    <li><strong>추천: JR + 버스:</strong> JR 사가아라시야마역 → JR 엔마치역 (약 10분) → 엔마치역 앞 버스 (204/205번) → 킨카쿠지미치 정류장 (약 10-15분).</li>
+                </ul>
+                 <p class="mt-2"><strong>금각사 (Kinkaku-ji) (약 45분~1시간):</strong></p>
+                <ul>
+                    <li>금박 누각 선종 사찰. 유네스코 세계문화유산.</li>
+                    <li>입장료: 성인 500엔. 개방: 09:00-17:00 (폐장 시간 엄수!).</li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="font-semibold text-lg text-teal-600">🍴 저녁 식사: 교토 (선택) 또는 오사카 복귀 후</h4>
+                <p>시간이 허락하면 교토역/기온에서 식사. 또는 오사카로 복귀 (올 때와 유사 경로) 후 난바/도톤보리에서 식사.</p>
+            </div>
+        </div>
+        
+        <div id="tab-day6" class="tab-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="section-title !mb-0">6일차: 나라 당일치기 또는 오사카 문화 체험/쇼핑 (7월 8일 화요일) 🦌🛍️</h2>
+                <button class="gemini-button" onclick="getDailyRecommendation('6일차', '나라 당일치기 (나라 공원, 도다이지 등) 또는 오사카 문화 체험 (쿠킹 클래스) 및 쇼핑')">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+                        <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.3l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.3A1.73 1.73 0 0 0 2.31 4.207l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
+                    </svg>
+                    오늘의 추천 활동
+                </button>
+            </div>
+            <p class="intro-paragraph">
+                여행 여섯째 날은 두 가지 매력적인 선택지 중 하나를 고를 수 있습니다. 고대 수도 나라의 평화로운 공원에서 사슴들과 교감하거나, 오사카에서 특별한 요리 체험과 함께 여유로운 쇼핑을 즐길 수 있습니다. 가족의 관심사와 컨디션에 맞춰 선택해 보세요!
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="subsection-title">선택 1: 나라 당일치기 (Nara Day Trip) 🦌</h3>
+                    <div class="plan-item">
+                        <h4 class="font-semibold text-lg text-teal-600">오사카 (난바) → 나라 이동</h4>
+                        <ul>
+                            <li><strong>추천: 긴테쓰 전철:</strong> 오사카난바역 → 긴테쓰나라역 (급행 약 30-40분, 약 680엔). 긴테쓰나라역이 공원과 가까움.</li>
+                            <li>JR선: JR난바역 → JR나라역 (야마토지선 쾌속 약 45-50분, 약 580엔). JR역은 공원까지 도보/버스 필요.</li>
+                        </ul>
+                    </div>
+                    <div class="plan-item">
+                        <h4 class="font-semibold text-lg text-teal-600">나라 공원 반나절 추천 일정 (약 4-5시간)</h4>
+                         <p><strong>추천 경로:</strong> 긴테쓰나라역 → 고후쿠지 → 나라 공원(사슴) → 도다이지 → 가스가타이샤 → 긴테쓰나라역.</p>
+                        <ul>
+                            <li><strong>고후쿠지 (약 60-75분):</strong> 오층탑, 동금당, 국보관 (입장료 별도).</li>
+                            <li><strong>나라 공원 사슴과 교감:</strong> 시카 센베 (사슴 전병 약 200엔) 주기 체험.</li>
+                            <li><strong>도다이지 (대불전) (약 60분):</strong> 세계 최대 목조 건축물, 거대 청동 불상 (입장료 성인 800엔).</li>
+                            <li><strong>가스가타이샤 신사 (약 45-60분):</strong> 수천 개 등롱, 주홍색 건물 (본전 특별 참배 500엔).</li>
+                        </ul>
+                    </div>
+                    <div class="plan-item">
+                        <h4 class="font-semibold text-lg text-teal-600">🍴 점심 식사: 긴테쓰나라역 근처 맛집</h4>
+                        <span class="details-toggle" onclick="toggleDetails(this)">식당 옵션 (4인 가족) 보기 ▼</span>
+                        <div class="details-content">
+                            <ul>
+                                <li><strong>스키야키토 규마부시 모모시키:</strong> 스키야키, 히츠마부시 전문 (테이블석, 세미 프라이빗 룸, 예약 가능).</li>
+                                <li><strong>키치리 (KICHIRI) 긴테쓰나라역앞점:</strong> 이자카야 스타일, 다양한 메뉴 (테이블석, 개인실).</li>
+                            </ul>
+                            <p><em>팁: 타베로그에서 '近鉄奈良駅', 'ランチ' 검색.</em></p>
+                        </div>
+                    </div>
+                    <div class="plan-item">
+                        <h4 class="font-semibold text-lg text-teal-600">오후: 오사카 복귀</h4>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="subsection-title">선택 2: 오사카 문화 체험 및 쇼핑 🍳🛍️</h3>
+                     <div class="plan-item">
+                        <h4 class="font-semibold text-lg text-teal-600">오전: 오사카 타코야키 & 오코노미야키 쿠킹 클래스</h4>
+                        <ul>
+                            <li>오사카 대표 음식 직접 만들어보기 (약 2-3시간 소요).</li>
+                            <li>GetYourGuide, Viator, Klook 등 플랫폼 통해 사전 예약 필수.</li>
+                        </ul>
+                    </div>
+                    <div class="plan-item">
+                        <h4 class="font-semibold text-lg text-teal-600">🍴 점심 식사: 직접 만든 요리!</h4>
+                    </div>
+                    <div class="plan-item">
+                        <h4 class="font-semibold text-lg text-teal-600">오후: 난바 지역 쇼핑 또는 아메리카무라</h4>
+                        <ul>
+                            <li><strong>난바 파크스:</strong> 독특한 건축 쇼핑몰, 옥상 정원, 다양한 상점.</li>
+                            <li><strong>난바 시티:</strong> 난카이 난바역 연결, 패션, 라이프스타일.</li>
+                            <li><strong>신사이바시스지 상점가:</strong> 아케이드 쇼핑가.</li>
+                            <li><strong>아메리카무라:</strong> 젊은이들의 패션/문화 중심지.</li>
+                            <li><strong>기념품 쇼핑:</strong> 돈키호테, 백화점, 쿠이다오레 타로 푸딩 등.</li>
+                        </ul>
+                    </div>
+                    <div class="plan-item">
+                        <h4 class="font-semibold text-lg text-teal-600">🍴 저녁 식사: 난바/닛폰바시 추천 맛집 (작별 만찬)</h4>
+                         <div class="insight-card">
+                            <p class="font-semibold">💡 Insight 14: 작별 만찬 고려 사항</p>
+                            <p>여행의 마지막 밤이므로 기억에 남고 숙소에서 접근하기 쉬운 곳이 좋습니다. 화요일 저녁이라도 예약하는 것이 중요합니다. 카드 결제와 예약 가능한 곳을 타베로그 필터로 찾아보세요.</p>
+                        </div>
+                        <span class="details-toggle" onclick="toggleDetails(this)">식당 옵션 (4인 가족) 보기 ▼</span>
+                        <div class="details-content">
+                            <p><strong>고려사항:</strong> 4인, 적당한 가격 (약간 높아도 OK), 일식, 카드 가능, 예약 선호.</p>
+                            <ul>
+                                <li><strong>도톤보리 크래프트 비어 양조장 난바 시티점:</strong> 이자카야, 쿠시카츠, 창코나베 (개인실).</li>
+                                <li><strong>창코 니시노류 (긴테쓰 닛폰바시):</strong> 정통 창코나베.</li>
+                                <li><strong>스시 아카즈 신사이바시점:</strong> 세련된 스시.</li>
+                                <li><strong>난바 스시 요코타:</strong> 스시, 덴푸라.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="tab-day7" class="tab-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="section-title !mb-0">7일차: 오사카 출발 (7월 9일 수요일) 👋</h2>
+                 <button class="gemini-button" onclick="getDailyRecommendation('7일차', '오전 여유로운 아침 식사 또는 마지막 기념품 쇼핑, 호텔 체크아웃, 공항 이동')">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+                        <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.3l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.3A1.73 1.73 0 0 0 2.31 4.207l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
+                    </svg>
+                    오늘의 추천 활동
+                </button>
+            </div>
+            <p class="intro-paragraph">
+                즐거웠던 오사카 여행의 마지막 날입니다. 오전에는 여유롭게 아침 식사를 하거나 못다 한 기념품 쇼핑을 즐긴 후, 체크아웃하고 공항으로 이동하여 한국으로 돌아가는 일정입니다. 마지막까지 편안하고 안전한 마무리가 될 수 있도록 시간 계획을 잘 세우는 것이 중요합니다.
+            </p>
+
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">오전: 여유로운 아침 식사 또는 마지막 기념품 쇼핑</h4>
+                <p><strong>아침 식사:</strong> 호텔 조식 (06:30 - 09:00).</p>
+                <p><strong>마지막 쇼핑:</strong> 전날 못한 기념품 구입 (난바 파크스, 돈키호테 등. 상점 오픈 시간 확인).</p>
+            </div>
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">호텔 체크아웃 및 수하물 보관</h4>
+                <p><strong>체크아웃 시간:</strong> 10:00.</p>
+                <p><strong>수하물 보관:</strong> 호텔 셀프 물품보관함 이용 (당일 23:00까지).</p>
+            </div>
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">🍴 점심 식사: 난바역/닛폰바시역 근처 간편한 식사</h4>
+                <p>공항 출발 전, 역 근처에서 간단히 식사. (첫날 점심 옵션 참고)</p>
+            </div>
+            <div class="plan-item">
+                <h4 class="font-semibold text-lg text-teal-600">호텔에서 간사이 국제공항 (KIX) 제2터미널 이동</h4>
+                <p><strong>출발 항공편:</strong> 제주항공 7C1306, 19:40, KIX 제2터미널 출발.</p>
+                <p><strong>공항 도착 목표 시간:</strong> 17:40 (출발 2시간 전).</p>
+                <div class="insight-card">
+                    <p class="font-semibold">💡 Insight 15: 출국일 공항 이동 최적화</p>
+                    <p>4인 가족의 경우, 짐을 들고 여러 번 환승하는 것보다 한 번에 편하게 이동할 수 있는 공항 리무진 버스(난바 OCAT 출발)가 더 효율적일 수 있습니다. 출발 시간 2시간 전 공항 도착을 기준으로 역산하여 숙소 출발 시간을 계획하세요.</p>
+                </div>
+                <span class="details-toggle" onclick="toggleDetails(this)">공항 이동 방법 보기 ▼</span>
+                <div class="details-content">
+                    <p><strong>선택 1: 공항 리무진 버스 (난바 OCAT 출발 - 추천):</strong></p>
+                    <ul>
+                        <li>소요 시간: 약 1시간 (OCAT → KIX T2). 요금: 1,300엔.</li>
+                        <li>스케줄: 오후 3-4시경 버스 다수. (예: 15:10 출발 → 16:09 T2 도착).</li>
+                        <li>예약 불필요, 선착순.</li>
+                    </ul>
+                    <p class="mt-2"><strong>선택 2: 난카이 전철 (난카이 난바역 출발):</strong></p>
+                    <ul>
+                        <li>공항급행: 난카이 난바역 → 간사이공항역 (T1) (약 45-50분, 970엔).</li>
+                        <li>특급 라피트: 난카이 난바역 → 간사이공항역 (T1) (약 35-40분, 1,130엔~).</li>
+                        <li>T1에서 T2로 무료 셔틀버스 이동 (약 7-10분).</li>
+                        <li>총 소요시간: 약 55-70분 + 환승/대기 시간.</li>
+                    </ul>
+                    <p><em>팁: 숙소에서 OCAT/난카이 난바역까지 이동 시간 고려하여 늦어도 16:00에는 난바에서 출발.</em></p>
+                </div>
+            </div>
+            <div>
+                <h4 class="font-semibold text-lg text-teal-600">19:40: 간사이 국제공항 (KIX) 제2터미널에서 인천으로 출발 🛫</h4>
+            </div>
+        </div>
+
+        <div id="dailyRecommendationModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('dailyRecommendationModal')">&times;</span>
+                <h3 id="modalTitle" class="subsection-title">AI 추천 활동 ✨</h3>
+                <div id="modalLoader" class="loader" style="display: none;"></div>
+                <div id="modalResult" class="gemini-output"></div>
+            </div>
+        </div>
+
+        <footer class="text-center mt-12 py-6 border-t border-stone-300">
+            <p class="text-stone-600">즐거운 오사카 여행 되시길 바랍니다!</p>
+            <p class="text-sm text-stone-500 mt-1">본 플래너는 제공된 정보를 바탕으로 제작되었습니다.</p>
+        </footer>
+    </div>
+
+    <script>
+        const API_KEY = ""; // 실제 API 키를 사용해야 합니다. Canvas 환경에서는 자동으로 제공될 수 있습니다.
+
+        function openTab(event, tabName) {
+            let i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            event.currentTarget.className += " active";
+        }
+
+        function toggleDetails(element) {
+            const content = element.nextElementSibling;
+            if (content.style.display === "block") {
+                content.style.display = "none";
+                element.textContent = element.textContent.replace("▲", "▼");
+            } else {
+                content.style.display = "block";
+                element.textContent = element.textContent.replace("▼", "▲");
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('.tab-button.active').click();
+
+            const conversationButton = document.getElementById('getConversationHelp');
+            if(conversationButton) {
+                conversationButton.addEventListener('click', getConversationHelp);
+            }
+        });
+
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = "block";
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = "none";
+            document.getElementById('modalResult').innerHTML = ''; // 이전 결과 지우기
+        }
+
+        async function callGeminiAPI(promptText) {
+            const modalLoader = document.getElementById('modalLoader');
+            const conversationResultEl = document.getElementById('conversationResult'); // For conversation helper
+            const modalResultEl = document.getElementById('modalResult'); // For daily reco modal
+
+            if (modalLoader) modalLoader.style.display = 'block';
+            if (conversationResultEl && conversationResultEl.style.display !== 'none') conversationResultEl.innerHTML = '<div class="loader"></div>'; // Show loader in conversation div
+            if (modalResultEl && document.getElementById('dailyRecommendationModal').style.display === 'block') modalResultEl.innerHTML = '<div class="loader"></div>';
+
+
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+            
+            let chatHistory = [{ role: "user", parts: [{ text: promptText }] }];
+            const payload = { contents: chatHistory };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("API Error:", errorData);
+                    throw new Error(`API 요청 실패: ${response.status} ${response.statusText}. ${errorData.error?.message || ''}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates.length > 0 &&
+                    data.candidates[0].content && data.candidates[0].content.parts &&
+                    data.candidates[0].content.parts.length > 0) {
+                    return data.candidates[0].content.parts[0].text;
+                } else {
+                    console.error("Unexpected API response structure:", data);
+                    return "죄송합니다, 예상치 못한 응답 형식입니다. 잠시 후 다시 시도해주세요.";
+                }
+            } catch (error) {
+                console.error('Gemini API 호출 중 오류 발생:', error);
+                return `죄송합니다, AI 추천을 가져오는 중 오류가 발생했습니다: ${error.message}`;
+            } finally {
+                if (modalLoader) modalLoader.style.display = 'none';
+            }
+        }
+
+        async function getDailyRecommendation(day, activities) {
+            const modalTitle = document.getElementById('modalTitle');
+            const modalResult = document.getElementById('modalResult');
+            
+            modalTitle.textContent = `${day} AI 추천 활동 ✨`;
+            showModal('dailyRecommendationModal');
+            modalResult.innerHTML = ""; // Clear previous results
+
+            // 예시 날씨 및 여행 스타일 (실제 앱에서는 사용자 입력을 받을 수 있음)
+            const weather = "맑고 더움"; 
+            const travelStyle = "가족 여행, 관광과 현지 음식 즐기기";
+
+            const prompt = `
+오사카 여행 ${day}입니다.
+오늘의 주요 계획은 다음과 같습니다: ${activities}.
+현재 날씨는 ${weather}입니다.
+여행 스타일은 ${travelStyle}입니다.
+
+이 정보를 바탕으로, 오늘 하루를 더 즐겁게 보낼 수 있는 추가 활동이나 기존 계획을 개선할 수 있는 아이디어를 한국어로 한 가지 제안해주세요. 제안은 간결하고 구체적으로 해주세요.
+예를 들어, "점심 식사 후 [장소] 근처의 [숨겨진 명소]를 방문해 보세요. [이유]" 또는 "[기존 활동] 시 [팁]을 활용하면 더욱 특별한 경험을 할 수 있습니다." 와 같이 제안해주세요.
+`;
+            const recommendation = await callGeminiAPI(prompt);
+            modalResult.textContent = recommendation;
+        }
+
+        async function getConversationHelp() {
+            const situationInput = document.getElementById('conversationSituation');
+            const resultDiv = document.getElementById('conversationResult');
+            const situation = situationInput.value.trim();
+
+            if (!situation) {
+                resultDiv.textContent = "상황을 입력해주세요.";
+                resultDiv.style.display = 'block';
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loader"></div>';
+
+
+            const prompt = `
+저는 한국인 관광객으로 일본을 여행 중입니다. 다음 상황에서 사용할 수 있는 유용한 일본어 표현을 알려주세요.
+상황: "${situation}"
+
+요청사항:
+1. 각 상황에 맞는 일본어 표현 2-3개를 알려주세요.
+2. 각 표현에 대한 한국어 번역과 로마자 발음을 함께 제공해주세요.
+3. 답변은 명확하고 이해하기 쉽게 구성해주세요. 예를 들어 다음과 같은 형식으로 부탁드립니다:
+
+일본어: [일본어 표현]
+한국어: [한국어 번역]
+발음: [로마자 발음]
+---
+일본어: [다음 일본어 표현]
+...
+`;
+            const helpText = await callGeminiAPI(prompt);
+            resultDiv.textContent = helpText;
+        }
+
+        // Close modal if user clicks outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('dailyRecommendationModal');
+            if (event.target == modal) {
+                closeModal('dailyRecommendationModal');
+            }
+        }
+
+    </script>
+</body>
+</html>
