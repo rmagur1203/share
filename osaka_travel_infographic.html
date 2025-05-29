@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오사카 6일간의 매력 탐험: 인포그래픽 가이드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Application Structure Plan: 
+        1. Hero: Title, Key Stats.
+        2. Trip Highlights Timeline: Visual overview of daily themes.
+        3. Preparation Checklist: Key items to pack/prepare.
+        4. Daily Breakdown: Card for each day with key locations, activities, food, transport tip.
+        5. Osaka Amazing Pass Deep Dive: Bar chart visualizing savings for Day 4.
+        6. Osaka Food Highlights: Visual list of iconic foods.
+        7. Kyoto & Nara Day Trips: Brief overview cards.
+        8. Departure Info: Simplified flowchart for airport transfer.
+        This structure provides a narrative flow, starting broad and then detailing specifics, which is suitable for an infographic presenting a travel plan.
+    -->
+    <!-- Visualization & Content Choices:
+        - Key Stats (Hero): Goal: Inform. Method: Large styled text. No SVG.
+        - Trip Timeline: Goal: Organize. Method: HTML/CSS styled divs. No SVG.
+        - Checklist: Goal: Organize. Method: HTML list with Unicode icons. No SVG.
+        - Daily Locations/Food Icons: Goal: Inform. Method: Unicode Emojis + Text. No SVG.
+        - Osaka Pass Savings Chart: Goal: Compare. Method: Bar Chart. Library: Chart.js. Justification: Visually compares costs to show savings. NO SVG. Label wrapping and tooltip config included.
+        - Food Grid: Goal: Inform. Method: HTML/CSS grid with Unicode Emojis. No SVG.
+        - Day Trip Cards: Goal: Inform. Method: Styled HTML cards. No SVG.
+        - Departure Flowchart: Goal: Organize. Method: HTML/CSS divs and arrows. No SVG.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #FFF5E1; /* Light Peach/Cream */
+            color: #4A4A4A; /* Dark Gray */
+            overscroll-behavior-y: none;
+        }
+        .hero-title { color: #FF6B6B; } /* Lively Coral/Red */
+        .section-title { color: #FF6B6B; border-bottom: 3px solid #FFA94D; } /* Warm Orange border */
+        .card { background-color: white; border: 1px solid #FFA94D; }
+        .accent-text { color: #48C9B0; } /* Tealish Green */
+        .highlight-text { color: #FF6B6B; }
+        .timeline-item::before {
+            content: '';
+            background-color: #FFA94D;
+            position: absolute;
+            left: -29px; /* Adjust based on icon size and line position */
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 3px solid white;
+            z-index: 1;
+        }
+        .timeline-line {
+            position: absolute;
+            left: -20px; /* Center with the dot */
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background-color: #FFA94D;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Max width for the chart */
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px; /* Base height */
+            max-height: 400px; /* Max height */
+        }
+         @media (min-width: 768px) { /* md breakpoint */
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .flowchart-step {
+            border: 2px solid #FFA94D;
+            background-color: #FFFAF0; /* Lighter peach for steps */
+        }
+        .flowchart-arrow {
+            color: #FFA94D;
+        }
+        .sticky-nav {
+            position: -webkit-sticky; /* Safari */
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: rgba(255, 245, 225, 0.9); /* Semi-transparent background */
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="sticky-nav shadow-md py-2 px-4 mb-6">
+        <div class="container mx-auto max-w-5xl flex justify-center space-x-4 overflow-x-auto whitespace-nowrap">
+            <a href="#hero" class="text-sm font-semibold text-orange-600 hover:text-red-500">여행 개요</a>
+            <a href="#timeline" class="text-sm font-semibold text-orange-600 hover:text-red-500">하이라이트</a>
+            <a href="#checklist" class="text-sm font-semibold text-orange-600 hover:text-red-500">준비물</a>
+            <a href="#daily" class="text-sm font-semibold text-orange-600 hover:text-red-500">일자별 계획</a>
+            <a href="#pass" class="text-sm font-semibold text-orange-600 hover:text-red-500">주유 패스</a>
+            <a href="#food" class="text-sm font-semibold text-orange-600 hover:text-red-500">미식</a>
+            <a href="#daytrips" class="text-sm font-semibold text-orange-600 hover:text-red-500">당일치기</a>
+            <a href="#departure" class="text-sm font-semibold text-orange-600 hover:text-red-500">출국 정보</a>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl space-y-12">
+
+        <section id="hero" class="text-center pt-8">
+            <h1 class="text-4xl md:text-5xl font-bold hero-title mb-4">오사카 6일간의 매력 탐험</h1>
+            <p class="text-xl md:text-2xl text-gray-700 mb-8">박금혁 님 가족을 위한 맞춤 여정 인포그래픽</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-lg">
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p class="text-4xl font-bold highlight-text">📅 6일</p>
+                    <p class="text-gray-600">여행 기간</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p class="text-4xl font-bold highlight-text">👨‍👩‍👧‍👦 4인</p>
+                    <p class="text-gray-600">가족 구성원</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p class="text-3xl font-bold highlight-text">✈️ ICN↔KIX</p>
+                    <p class="text-gray-600">제주항공</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p class="text-2xl font-bold highlight-text">🏨 토요코인</p>
+                    <p class="text-gray-600">오사카 난바</p>
+                </div>
+            </div>
+            <p class="mt-6 text-gray-600 text-sm">오사카의 활기찬 도시 풍경과 일본 전통 문화를 동시에 경험하는 5박 6일 여정입니다. 이 인포그래픽을 통해 전체적인 계획을 한눈에 살펴보세요!</p>
+        </section>
+
+        <section id="timeline" class="pt-8">
+            <h2 class="text-3xl font-bold section-title mb-8 pb-2 text-center">여행 하이라이트 타임라인 🗺️</h2>
+            <p class="text-center text-gray-600 mb-10">각 날짜별 주요 테마와 방문지를 간략하게 소개합니다. 오사카를 중심으로 교토와 나라까지, 다채로운 경험이 기다리고 있습니다.</p>
+            <div class="relative pl-8">
+                <div class="timeline-line hidden md:block"></div>
+                <div class="space-y-10">
+                    <div class="timeline-item relative card p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-semibold accent-text mb-1">Day 1: 오사카 첫 만남 🏙️</h3>
+                        <p class="text-gray-700">간사이 공항 도착, 난바 숙소 이동 후 닛폰바시 덴덴타운과 구로몬 시장 탐방.</p>
+                    </div>
+                    <div class="timeline-item relative card p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-semibold accent-text mb-1">Day 2: 도톤보리 & 신사이바시 정복 ✨</h3>
+                        <p class="text-gray-700">오사카의 심장부! 글리코상, 호젠지 요코초, 신사이바시 쇼핑 거리 만끽.</p>
+                    </div>
+                    <div class="timeline-item relative card p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-semibold accent-text mb-1">Day 3: 역사와 레트로 감성 🏯</h3>
+                        <p class="text-gray-700">오사카성 방문 후 신세카이에서 츠텐카쿠와 쿠시카츠 체험.</p>
+                    </div>
+                    <div class="timeline-item relative card p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-semibold accent-text mb-1">Day 4: 베이 에어리어 & 우메다 야경 🎡</h3>
+                        <p class="text-gray-700">가이유칸, 덴포잔 대관람차, 산타마리아호 크루즈 후 우메다 스카이 빌딩 야경.</p>
+                    </div>
+                     <div class="timeline-item relative card p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-semibold accent-text mb-1">Day 5: 교토 당일치기 ⛩️</h3>
+                        <p class="text-gray-700">고도 교토의 아름다움! 후시미 이나리, 기요미즈데라, 아라시야마, 금각사 탐방.</p>
+                    </div>
+                    <div class="timeline-item relative card p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-semibold accent-text mb-1">Day 6: 나라 또는 오사카 체험 🦌/🍳</h3>
+                        <p class="text-gray-700">나라 사슴 공원 당일치기 또는 오사카 쿠킹 클래스 및 쇼핑.</p>
+                    </div>
+                    <div class="timeline-item relative card p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-semibold accent-text mb-1">Day 7: 아쉬운 작별 ✈️</h3>
+                        <p class="text-gray-700">오전 자유시간 후 간사이 공항에서 출국.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="checklist" class="pt-8">
+            <h2 class="text-3xl font-bold section-title mb-8 pb-2 text-center">여행 준비물 체크리스트 ✅</h2>
+            <p class="text-center text-gray-600 mb-10">잊지 말고 챙겨야 할 필수품과 유용한 아이템 목록입니다. 꼼꼼히 확인하여 즐거운 여행을 준비하세요.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold accent-text mb-2">✈️ 기본 필수품</h3>
+                    <ul class="space-y-1 text-gray-700 list-disc list-inside">
+                        <li>여권, 항공권 (E-티켓)</li>
+                        <li>숙소 바우처</li>
+                        <li>엔화 (현금 및 카드)</li>
+                        <li>여행자 보험</li>
+                    </ul>
+                </div>
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold accent-text mb-2">💳 교통 & 통신</h3>
+                    <ul class="space-y-1 text-gray-700 list-disc list-inside">
+                        <li>ICOCA 카드 또는 교통패스</li>
+                        <li>유심카드 또는 포켓 와이파이</li>
+                        <li>110V 변환 어댑터 (돼지코)</li>
+                        <li>보조 배터리</li>
+                    </ul>
+                </div>
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold accent-text mb-2">👕 의류 & 기타</h3>
+                    <ul class="space-y-1 text-gray-700 list-disc list-inside">
+                        <li>가볍고 통기성 좋은 여름옷</li>
+                        <li>편한 신발 (많이 걸어요!)</li>
+                        <li>작은 우산 또는 우비</li>
+                        <li>자외선 차단 용품 (모자, 선글라스)</li>
+                        <li>개인 상비약</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="daily" class="pt-8">
+            <h2 class="text-3xl font-bold section-title mb-8 pb-2 text-center">일자별 상세 계획 🗓️</h2>
+            <p class="text-center text-gray-600 mb-10">각 날짜별 주요 방문 장소, 추천 활동, 미식 포인트, 그리고 간단한 교통 팁을 시각적으로 정리했습니다.</p>
+            <div class="space-y-8">
+                <div class="card p-6 rounded-lg shadow-xl">
+                    <h3 class="text-2xl font-bold highlight-text mb-3">DAY 1: 오사카 첫 만남 🏙️</h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <h4 class="font-semibold accent-text">📍 주요 동선</h4>
+                            <p>KIX 공항 → 난바 숙소 → 닛폰바시 덴덴타운 → 구로몬 시장</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🍜 미식 포인트</h4>
+                            <p>라멘/우동 (점심), 구로몬 시장 길거리 음식 (저녁)</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🚇 교통 팁</h4>
+                            <p>공항 리무진 또는 난카이 전철, 시내 도보</p>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-600">도착 후 오사카의 활기찬 분위기를 느끼며 첫날을 시작합니다. 덴덴타운의 독특한 문화와 구로몬 시장의 신선한 먹거리를 즐겨보세요.</p>
+                </div>
+
+                <div class="card p-6 rounded-lg shadow-xl">
+                    <h3 class="text-2xl font-bold highlight-text mb-3">DAY 2: 도톤보리 & 신사이바시 ✨</h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <h4 class="font-semibold accent-text">📍 주요 동선</h4>
+                            <p>도톤보리 글리코상 → 호젠지 요코초 → 신사이바시스지 상점가</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🍜 미식 포인트</h4>
+                            <p>🐙 타코야키, 🍳 오코노미야키 (점심)</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🚇 교통 팁</h4>
+                            <p>숙소에서 도보 이동 위주</p>
+                        </div>
+                    </div>
+                     <p class="mt-4 text-sm text-gray-600">오사카의 상징적인 도톤보리와 쇼핑 천국 신사이바시를 탐험합니다. 활기찬 거리와 맛있는 음식, 그리고 고즈넉한 골목길의 매력을 느껴보세요.</p>
+                </div>
+
+                <div class="card p-6 rounded-lg shadow-xl">
+                    <h3 class="text-2xl font-bold highlight-text mb-3">DAY 3: 역사와 레트로 감성 🏯</h3>
+                     <div class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <h4 class="font-semibold accent-text">📍 주요 동선</h4>
+                            <p>오사카성 & 니시노마루 정원 → 신세카이 → 츠텐카쿠 타워</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🍜 미식 포인트</h4>
+                            <p>조테라스 (점심), 🍢 쿠시카츠 (저녁)</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🚇 교통 팁</h4>
+                            <p>지하철 이동 (주유패스 고려)</p>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-600">오사카의 역사적인 면모를 볼 수 있는 오사카성과 복고풍 매력이 넘치는 신세카이를 방문합니다. 츠텐카쿠에서 전망도 즐겨보세요.</p>
+                </div>
+
+                <div class="card p-6 rounded-lg shadow-xl">
+                    <h3 class="text-2xl font-bold highlight-text mb-3">DAY 4: 베이 에어리어 & 우메다 야경 🎡</h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <h4 class="font-semibold accent-text">📍 주요 동선</h4>
+                            <p>가이유칸 → 덴포잔 마켓플레이스 → 대관람차/산타마리아호 → 우메다 스카이 빌딩</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🍜 미식 포인트</h4>
+                            <p>덴포잔 마켓플레이스 (점심), 우메다 맛집 (저녁)</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🚇 교통 팁</h4>
+                            <p class="text-red-500 font-bold">🌟 오사카 주유 패스 강력 추천!</p>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-600">오사카 베이 에어리어의 즐길 거리와 우메다의 화려한 야경을 만끽하는 날입니다. 오사카 주유 패스를 활용하면 더욱 경제적입니다.</p>
+                </div>
+                
+                <div class="card p-6 rounded-lg shadow-xl">
+                    <h3 class="text-2xl font-bold highlight-text mb-3">DAY 5: 교토 당일치기 🌸⛩️</h3>
+                     <div class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <h4 class="font-semibold accent-text">📍 주요 동선</h4>
+                            <p>후시미 이나리 → 기요미즈데라 → 아라시야마 → 금각사</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🍜 미식 포인트</h4>
+                            <p>교토 가정식/우동 (점심), 교토 또는 오사카 (저녁)</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🚇 교통 팁</h4>
+                            <p>JR, 게이한 전철, 교토 버스 1일권</p>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-600">일본의 고도, 교토의 아름다움을 하루 동안 만끽합니다. 신사, 사찰, 대나무 숲 등 교토의 핵심 명소를 둘러봅니다.</p>
+                </div>
+
+                <div class="card p-6 rounded-lg shadow-xl">
+                    <h3 class="text-2xl font-bold highlight-text mb-3">DAY 6: 나라 또는 오사카 체험 🦌/🍳</h3>
+                     <div class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <h4 class="font-semibold accent-text">📍 주요 동선</h4>
+                            <p>나라: 나라 공원, 도다이지 등<br>오사카: 쿠킹 클래스, 난바 쇼핑</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🍜 미식 포인트</h4>
+                            <p>나라: 긴테쓰나라역 근처 (점심)<br>오사카: 직접 만든 요리, 난바 맛집 (저녁)</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🚇 교통 팁</h4>
+                            <p>나라: 긴테쓰 전철<br>오사카: 도보 및 지하철</p>
+                        </div>
+                    </div>
+                     <p class="mt-4 text-sm text-gray-600">나라의 사슴과 교감하거나 오사카에서 특별한 문화 체험과 쇼핑을 즐기는 날입니다. 가족의 취향에 맞게 선택하세요.</p>
+                </div>
+
+                 <div class="card p-6 rounded-lg shadow-xl">
+                    <h3 class="text-2xl font-bold highlight-text mb-3">DAY 7: 아쉬운 작별 ✈️</h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <h4 class="font-semibold accent-text">📍 주요 동선</h4>
+                            <p>숙소 → (선택: 마지막 쇼핑) → 간사이 공항 (KIX T2)</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🍜 미식 포인트</h4>
+                            <p>호텔 조식, 난바/닛폰바시 간편식 (점심)</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold accent-text">🚇 교통 팁</h4>
+                            <p>공항 리무진 버스 (난바 OCAT 출발)</p>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-sm text-gray-600">여행의 마지막 날입니다. 여유롭게 아침을 보내고 공항으로 이동하여 한국으로 돌아갑니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="pass" class="pt-8">
+            <h2 class="text-3xl font-bold section-title mb-8 pb-2 text-center">오사카 주유 패스 활용법 뽕뽑기! 💸</h2>
+            <p class="text-center text-gray-600 mb-10">4일차 일정을 오사카 주유 패스(1일권)로 즐기면 얼마나 절약될까요? 주요 명소 입장료와 패스 가격을 비교해 보세요.</p>
+            <div class="chart-container card p-4 md:p-6 rounded-lg shadow-xl">
+                <canvas id="passSavingsChart"></canvas>
+            </div>
+            <p class="text-center mt-4 font-semibold text-lg highlight-text">🎉 4일차 주요 명소 입장료만 <span id="savingsAmount">1,200</span>엔 절약! (교통비 별도) 🎉</p>
+             <p class="text-center text-sm text-gray-500 mt-2">※ 2025년 기준 예상 요금으로 실제와 다를 수 있습니다. 가이유칸은 패스 무료입장 대상이 아닙니다.</p>
+        </section>
+
+        <section id="food" class="pt-8">
+            <h2 class="text-3xl font-bold section-title mb-8 pb-2 text-center">오사카 미식 탐방 😋</h2>
+            <p class="text-center text-gray-600 mb-10">오사카는 '쿠이다오레(먹다 망한다)'의 도시! 놓치지 말아야 할 대표 음식을 소개합니다.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <div class="card p-6 rounded-lg shadow-lg text-center">
+                    <p class="text-6xl mb-3">🐙</p>
+                    <h3 class="text-xl font-semibold accent-text">타코야키</h3>
+                    <p class="text-sm text-gray-600">오사카 대표 간식! 문어가 들어간 동글동글 맛있는 풀빵.</p>
+                </div>
+                <div class="card p-6 rounded-lg shadow-lg text-center">
+                    <p class="text-6xl mb-3">🍳</p>
+                    <h3 class="text-xl font-semibold accent-text">오코노미야키</h3>
+                    <p class="text-sm text-gray-600">철판 위에서 지글지글! 취향대로 만들어 먹는 일본식 빈대떡.</p>
+                </div>
+                <div class="card p-6 rounded-lg shadow-lg text-center">
+                    <p class="text-6xl mb-3">🍢</p>
+                    <h3 class="text-xl font-semibold accent-text">쿠시카츠</h3>
+                    <p class="text-sm text-gray-600">다양한 재료를 꼬치에 꽂아 튀긴 바삭한 튀김 요리.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="daytrips" class="pt-8">
+            <h2 class="text-3xl font-bold section-title mb-8 pb-2 text-center">교토 & 나라 당일치기 엿보기 🌸🦌</h2>
+            <p class="text-center text-gray-600 mb-10">시간이 허락한다면 오사카 근교의 매력적인 도시, 교토와 나라 당일치기도 강력 추천합니다.</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-2xl font-bold highlight-text mb-3">교토 (Day 5)</h3>
+                    <img src="https://placehold.co/600x300/FFC0CB/4A4A4A?text=교토+풍경+이미지" alt="교토 풍경" class="rounded-md mb-4 h-48 w-full object-cover" onerror="this.src='https://placehold.co/600x300/E0E0E0/4A4A4A?text=Image+Not+Found'">
+                    <p class="text-gray-700 mb-2"><span class="font-semibold accent-text">주요 명소:</span> ⛩️ 후시미 이나리 신사, 🌸 기요미즈데라, 🎋 아라시야마 대나무 숲, ✨ 금각사</p>
+                    <p class="text-sm text-gray-600">천년 고도의 아름다움과 전통문화를 느낄 수 있는 곳. 수많은 신사와 사찰, 그리고 아름다운 자연 경관이 어우러져 있습니다.</p>
+                </div>
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-2xl font-bold highlight-text mb-3">나라 (Day 6 - 선택)</h3>
+                    <img src="https://placehold.co/600x300/90EE90/4A4A4A?text=나라+사슴+이미지" alt="나라 사슴" class="rounded-md mb-4 h-48 w-full object-cover" onerror="this.src='https://placehold.co/600x300/E0E0E0/4A4A4A?text=Image+Not+Found'">
+                    <p class="text-gray-700 mb-2"><span class="font-semibold accent-text">주요 명소:</span> 🦌 나라 공원, 🏛️ 도다이지 (대불전), <span style="font-family:Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol;">🏮</span> 가스가타이샤</p>
+                    <p class="text-sm text-gray-600">자유롭게 노니는 사슴들과 교감하고, 웅장한 도다이지 대불을 볼 수 있는 평화로운 도시입니다.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="departure" class="pt-8">
+            <h2 class="text-3xl font-bold section-title mb-8 pb-2 text-center">안녕 오사카! 공항 가는 길 ✈️</h2>
+            <p class="text-center text-gray-600 mb-10">여행 마지막 날, 간사이 국제공항(KIX) 제2터미널까지 안전하고 편안하게 이동하는 방법을 안내합니다.</p>
+            <div class="space-y-6">
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold accent-text mb-3">추천 경로: 리무진 버스 🚌</h3>
+                    <div class="flex flex-col sm:flex-row items-center justify-around space-y-4 sm:space-y-0 sm:space-x-4">
+                        <div class="flowchart-step p-3 rounded-md text-center">숙소 (토요코인 난바)</div>
+                        <div class="text-3xl flowchart-arrow self-center">➡️</div>
+                        <div class="flowchart-step p-3 rounded-md text-center">난바 OCAT (도보/택시)</div>
+                        <div class="text-3xl flowchart-arrow self-center">➡️</div>
+                        <div class="flowchart-step p-3 rounded-md text-center">리무진 버스 (약 1시간)</div>
+                        <div class="text-3xl flowchart-arrow self-center">➡️</div>
+                        <div class="flowchart-step p-3 rounded-md text-center">KIX 제2터미널</div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-4"><strong>장점:</strong> 환승 없이 편리하게 이동, 짐 많은 가족에게 적합.</p>
+                    <p class="text-sm text-gray-600"><strong>소요 시간:</strong> 약 1시간 (OCAT 출발 기준)</p>
+                    <p class="text-sm text-gray-600"><strong>예상 요금:</strong> 1,300엔</p>
+                </div>
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold accent-text mb-3">대안 경로: 난카이 전철 🚆</h3>
+                     <div class="flex flex-col sm:flex-row items-center justify-around space-y-4 sm:space-y-0 sm:space-x-2">
+                        <div class="flowchart-step p-2 rounded-md text-center">숙소</div>
+                        <div class="text-2xl flowchart-arrow self-center">➡️</div>
+                        <div class="flowchart-step p-2 rounded-md text-center">난카이 난바역</div>
+                        <div class="text-2xl flowchart-arrow self-center">➡️</div>
+                        <div class="flowchart-step p-2 rounded-md text-center">난카이 전철 (공항급행/라피트)</div>
+                        <div class="text-2xl flowchart-arrow self-center">➡️</div>
+                        <div class="flowchart-step p-2 rounded-md text-center">KIX 제1터미널</div>
+                         <div class="text-2xl flowchart-arrow self-center">➡️</div>
+                        <div class="flowchart-step p-2 rounded-md text-center">무료 셔틀</div>
+                        <div class="text-2xl flowchart-arrow self-center">➡️</div>
+                        <div class="flowchart-step p-2 rounded-md text-center">KIX 제2터미널</div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-4"><strong>장점:</strong> 라피트 이용 시 빠름, 교통 상황 영향 적음.</p>
+                    <p class="text-sm text-gray-600"><strong>소요 시간:</strong> 약 55-70분 + 환승/대기</p>
+                    <p class="text-sm text-gray-600"><strong>예상 요금:</strong> 970엔 (공항급행) ~</p>
+                </div>
+                 <p class="text-center text-gray-500 text-xs">※ 항공편 출발 2시간 전 공항 도착을 목표로 충분한 여유를 두고 출발하세요.</p>
+            </div>
+        </section>
+
+        <footer class="text-center mt-12 py-8 border-t-2 border-orange-300">
+            <p class="text-lg text-gray-700">박금혁 님의 오사카 여행이 즐거운 추억으로 가득하시기를 바랍니다!</p>
+            <p class="text-sm text-gray-500 mt-2">본 인포그래픽은 제공된 여행 계획을 바탕으로 제작되었습니다. 최신 정보는 항상 공식 웹사이트 등에서 재확인해주세요.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const passData = {
+                labels: [
+                    ['덴포잔', '대관람차'], 
+                    ['산타마리아호', '데이 크루즈'], 
+                    ['우메다 스카이', '빌딩 공중정원']
+                ],
+                datasets: [{
+                    label: '개별 입장료 (엔)',
+                    data: [900, 1800, 2000],
+                    backgroundColor: '#FFA94D', // Warm Orange
+                    borderColor: '#FF6B6B', // Lively Coral/Red
+                    borderWidth: 1
+                }]
+            };
+
+            const totalIndividualCost = passData.datasets[0].data.reduce((a, b) => a + b, 0);
+            const passCost = 3500; // 오사카 주유패스 1일권 가격
+            const savings = totalIndividualCost - passCost;
+            document.getElementById('savingsAmount').textContent = savings.toLocaleString();
+
+            passData.labels.push('주유 패스 1일권');
+            passData.datasets[0].data.push(passCost);
+            passData.datasets[0].backgroundColor = [...Array(3).fill('#FFA94D'), '#48C9B0']; // Teal for pass
+
+
+            const passCtx = document.getElementById('passSavingsChart').getContext('2d');
+            new Chart(passCtx, {
+                type: 'bar',
+                data: passData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '금액 (엔)',
+                                font: { size: 14, family: "'Noto Sans KR', sans-serif" }
+                            },
+                            ticks: {
+                                font: { size: 10, family: "'Noto Sans KR', sans-serif" }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: { size: 10, family: "'Noto Sans KR', sans-serif" },
+                                callback: function(value, index, values) {
+                                    const label = this.getLabelForValue(value);
+                                    return Array.isArray(label) ? label : [label];
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                             labels: {
+                                font: { size: 12, family: "'Noto Sans KR', sans-serif" }
+                            }
+                        },
+                        tooltip: {
+                            titleFont: { size: 14, family: "'Noto Sans KR', sans-serif" },
+                            bodyFont: { size: 12, family: "'Noto Sans KR', sans-serif" },
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    const item = tooltipItems[0];
+                                    let label = item.chart.data.labels[item.dataIndex];
+                                    if (Array.isArray(label)) {
+                                      return label.join(' ');
+                                    } else {
+                                      return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Sticky Nav Scroll
+            const navLinks = document.querySelectorAll('.sticky-nav a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        const offsetTop = targetElement.offsetTop - 80; // Adjust for sticky nav height
+                        window.scrollTo({
+                            top: offsetTop,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
